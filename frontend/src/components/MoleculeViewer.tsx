@@ -1,3 +1,4 @@
+/// <reference path="../types/3dmol.d.ts" />
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Maximize2, Minimize2, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
 import { debounce } from 'lodash';

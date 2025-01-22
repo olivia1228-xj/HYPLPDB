@@ -5,11 +5,58 @@ import {
   searchPeptides,
   performBlastComparison,
   performStructureSearch,
-  type SearchParams,
-  type SearchResult,
-  type BlastComparisonResult,
-  type StructureSearchResult
+  type SearchParams
 } from '../lib/api';
+
+// 在文件开始处添加这些类型定义
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+interface BaseResult {
+  id: string;
+  sequence?: string;
+  species?: string;
+  function?: string;
+}
+interface SearchResult extends BaseResult {
+  molecularWeight: number;
+  sequenceLength: number;
+  score?: number;
+  class?: string;
+}
+interface BlastComparisonResult extends BaseResult {
+  id: string;
+  score: number;
+  identity: number;
+  sequence: string;
+  sequenceLength?: number;  // 添加这个属性
+  name?: string;
+  function?: string;
+  species?: string;     // 添加这个属性
+  class?: string;       // 添加这个属性
+}
+interface StructureSearchResult extends BaseResult {
+  similarity: number;
+  molecular_weight?: number;
+  smiles?: string;
+}
+
+// 类型保护函数
+function isSearchResult(result: any): result is SearchResult {
+  return 'molecularWeight' in result;
+}
+
+function isBlastResult(result: any): result is BlastComparisonResult {
+  return 'identity' in result;
+}
+
+function isStructureResult(result: any): result is StructureSearchResult {
+  return 'similarity' in result;
+}
 
 const SearchResultCard = ({ result, type }: {
   result: SearchResult | BlastComparisonResult | StructureSearchResult;
@@ -22,12 +69,12 @@ const SearchResultCard = ({ result, type }: {
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="font-semibold text-gray-900">{result.id}</h3>
-        {type === 'simple' && 'class' in result && (
+        {type === 'simple' && isSearchResult(result) && (
           <span className="text-sm bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
             {result.species}
           </span>
         )}
-        {type === 'blast' && 'score' in result && (
+        {type === 'blast' && isBlastResult(result) && (
           <div className="flex items-center space-x-2">
             <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
               Score: {result.score.toFixed(1)}
@@ -37,46 +84,50 @@ const SearchResultCard = ({ result, type }: {
             </span>
           </div>
         )}
-        {type === 'structure' && 'similarity' in result && (
+        {type === 'structure' && isStructureResult(result) && (
           <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
             Similarity: {(result.similarity * 100).toFixed(1)}%
           </span>
         )}
       </div>
 
-      <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded mb-2">
-        {result.sequence}
-      </p>
-
-      {type === 'simple' && 'source' in result && (
-        <div className="text-sm text-gray-600">
-          <p><span className="font-medium">Species:</span> {result.species}</p>
-          <p><span className="font-medium">MW:</span> {result.molecularWeight.toFixed(1)} Da</p>
-          <p><span className="font-medium">Length:</span> {result.sequenceLength} aa</p>
-        </div>
+      {result.sequence && (
+        <p className="text-sm font-mono bg-gray-50 px-2 py-1 rounded mb-2">
+          {result.sequence}
+        </p>
       )}
 
-      {type === 'blast' && 'score' in result && (
-        <div className="text-sm text-gray-600 space-y-1">
-          {result.sequenceLength && (
+      <div className="text-sm text-gray-600">
+        {isSearchResult(result) && (
+          <>
+            {result.species && (
+              <p><span className="font-medium">Species:</span> {result.species}</p>
+            )}
+            <p><span className="font-medium">MW:</span> {result.molecularWeight.toFixed(1)} Da</p>
             <p><span className="font-medium">Length:</span> {result.sequenceLength} aa</p>
-          )}
-          {result.function && (
-            <p><span className="font-medium">Function:</span> {result.function}</p>
-          )}
-        </div>
-      )}
-
-      {type === 'structure' && 'similarity' in result && (
-        <div className="text-sm text-gray-600 space-y-1">
-          {result.molecular_weight && (
-            <p><span className="font-medium">MW:</span> {result.molecular_weight.toFixed(1)} Da</p>
-          )}
-          {result.smiles && (
-            <p><span className="font-medium">SMILES:</span> {result.smiles}</p>
-          )}
-        </div>
-      )}
+          </>
+        )}
+        {isBlastResult(result) && (
+          <>
+            {result.sequenceLength && (
+              <p><span className="font-medium">Length:</span> {result.sequenceLength} aa</p>
+            )}
+            {result.function && (
+              <p><span className="font-medium">Function:</span> {result.function}</p>
+            )}
+          </>
+        )}
+        {isStructureResult(result) && (
+          <>
+            {result.molecular_weight && (
+              <p><span className="font-medium">MW:</span> {result.molecular_weight.toFixed(1)} Da</p>
+            )}
+            {result.smiles && (
+              <p><span className="font-medium">SMILES:</span> {result.smiles}</p>
+            )}
+          </>
+        )}
+      </div>
     </Link>
   );
 };
@@ -164,10 +215,15 @@ const SearchPage = () => {
             q: searchQuery,
             page: currentPage,
             per_page: 10,
-            exact_match: false // 默认使用模糊匹配
+            exact_match: false
           });
           setSearchResults(response.items);
-          setPagination(response.pagination);
+          setPagination({
+            total: response.total,
+            page: response.page,
+            per_page: response.per_page,
+            total_pages: response.total_pages
+          });
           break;
         case 'blast':
           try {
@@ -262,7 +318,7 @@ const SearchPage = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type based on search mode
+      // Validate file types based on search mode
       const validTypes = {
         structure: ['.mol2', '.sdf', '.pdb'],
         blast: ['.fasta', '.fa', '.txt']
@@ -890,9 +946,8 @@ const SearchPage = () => {
                     key={uniqueKey}
                     result={{
                       ...result,
-                      // 确保必要的字段存在
+                      sequenceLength: result.sequenceLength || (result.sequence ? result.sequence.length : 0), // 添加长度计算
                       id: result.id || `result-${index}`,
-                      name: result.name || 'Unknown Sequence',
                       sequence: result.sequence || '',
                       score: result.score || 0,
                       identity: result.identity || 0,

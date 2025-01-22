@@ -7,33 +7,41 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "vercel-build": "tsc --skipLibCheck && vite build"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.13.2",
-    "axios": "^1.6.7",
+    "@types/jest": "^29.5.14",
+    "@types/react-router-dom": "^5.3.3",
+    "axios": "^1.7.9",
     "clsx": "^2.1.0",
     "glob": "^11.0.1",
     "lucide-react": "^0.344.0",
+    "molstar": "^4.10.0",
+    "ngl": "^2.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.3",
+    "react-router-dom": "^6.28.2",
     "recharts": "^2.12.2",
     "rimraf": "^6.0.1",
     "tailwind-merge": "^2.2.1",
+    "three": "^0.172.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@types/node": "^20.11.24",
-    "@types/react": "^18.2.56",
-    "@types/react-dom": "^18.2.19",
+    "@types/lodash": "^4.17.14",
+    "@types/node": "^20.17.14",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/three": "^0.172.0",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.2.2",
+    "typescript": "^5.7.3",
     "vite": "^5.1.4"
   }
 }

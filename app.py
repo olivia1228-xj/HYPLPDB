@@ -530,7 +530,7 @@ def handle_file_upload(file, allowed_extensions):
         raise APIError("No file selected")
 
     if not allowed_file(file.filename):
-        raise APIError(f"File type not allowed. Supported types: {allowed_extensions}")
+        raise APIError(f"File types not allowed. Supported types: {allowed_extensions}")
 
     try:
         filename = secure_filename(file.filename)
